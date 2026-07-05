@@ -1,0 +1,15 @@
+import { Router } from "express";
+import { inventoryController } from "./inventory.controller";
+import { authMiddleware } from "../../middlewares/auth.middleware";
+import { auditMiddleware } from "../../middlewares/audit.middleware";
+import { validate } from "../../middlewares/validate.middleware";
+import { createMovementSchema } from "./inventory.validation";
+
+const router = Router();
+
+router.get("/", authMiddleware, inventoryController.getAll);
+router.get("/:id", authMiddleware, inventoryController.getById);
+router.get("/product/:productId", authMiddleware, inventoryController.getByProduct);
+router.post("/", authMiddleware, auditMiddleware("CREATE", "InventoryMovement"), validate(createMovementSchema), inventoryController.create);
+
+export default router;

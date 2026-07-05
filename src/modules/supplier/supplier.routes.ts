@@ -1,0 +1,16 @@
+import { Router } from "express";
+import { supplierController } from "./supplier.controller";
+import { authMiddleware, requireRole } from "../../middlewares/auth.middleware";
+import { auditMiddleware } from "../../middlewares/audit.middleware";
+import { validate } from "../../middlewares/validate.middleware";
+import { createSupplierSchema, updateSupplierSchema } from "./supplier.validation";
+
+const router = Router();
+
+router.get("/", authMiddleware, supplierController.getAll);
+router.get("/:id", authMiddleware, supplierController.getById);
+router.post("/", authMiddleware, auditMiddleware("CREATE", "Supplier"), validate(createSupplierSchema), supplierController.create);
+router.patch("/:id", authMiddleware, requireRole("ADMIN"), auditMiddleware("UPDATE", "Supplier"), validate(updateSupplierSchema), supplierController.update);
+router.delete("/:id", authMiddleware, requireRole("ADMIN"), auditMiddleware("DELETE", "Supplier"), supplierController.delete);
+
+export default router;

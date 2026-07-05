@@ -1,0 +1,14 @@
+import { Router } from "express";
+import { getAllHandler, createHandler, updateHandler, deleteHandler } from "./category.controller";
+import { authMiddleware, requireRole } from "../../middlewares/auth.middleware";
+import { auditMiddleware } from "../../middlewares/audit.middleware";
+import { validate } from "../../middlewares/validate.middleware";
+import { createCategorySchema, updateCategorySchema } from "./category.validation";
+
+const router = Router();
+router.get("/", authMiddleware, getAllHandler);
+router.post("/", authMiddleware, auditMiddleware("CREATE", "Category"), validate(createCategorySchema), createHandler);
+router.put("/:id", authMiddleware, auditMiddleware("UPDATE", "Category"), validate(updateCategorySchema), updateHandler);
+router.delete("/:id", authMiddleware, requireRole("ADMIN"), auditMiddleware("DELETE", "Category"), deleteHandler);
+
+export default router;

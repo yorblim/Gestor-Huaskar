@@ -1,0 +1,24 @@
+import { Router } from "express";
+import {
+  getAllProductsHandler,
+  getProductByIdHandler,
+  getProductByBarcodeHandler,
+  createProductHandler,
+  updateProductHandler,
+  deleteProductHandler,
+} from "./product.controller";
+import { authMiddleware, requireRole } from "../../middlewares/auth.middleware";
+import { auditMiddleware } from "../../middlewares/audit.middleware";
+import { validate } from "../../middlewares/validate.middleware";
+import { createProductSchema, updateProductSchema } from "./product.validation";
+
+const productRouter = Router();
+
+productRouter.get("/", authMiddleware, getAllProductsHandler);
+productRouter.get("/barcode/:barcode", authMiddleware, getProductByBarcodeHandler);
+productRouter.get("/:id", authMiddleware, getProductByIdHandler);
+productRouter.post("/", authMiddleware, auditMiddleware("CREATE", "Product"), validate(createProductSchema), createProductHandler);
+productRouter.put("/:id", authMiddleware, auditMiddleware("UPDATE", "Product"), validate(updateProductSchema), updateProductHandler);
+productRouter.delete("/:id", authMiddleware, requireRole("ADMIN"), auditMiddleware("DELETE", "Product"), deleteProductHandler);
+
+export default productRouter;

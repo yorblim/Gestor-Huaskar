@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  barcode   String?  @unique
+  name      String
+  price     Decimal
+  costPrice Decimal  @default(0)
+  stock     Int
+  minStock  Int
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  saleItems           SaleItem[]
+  inventoryMovements  InventoryMovement[]
+  purchaseOrderItems  PurchaseOrderItem[]
+  batches             ProductBatch[]
+}
+
+model ProductBatch {
+  id             String   @id @default(cuid())
+  productId      String
+  code           String
+  quantity       Int
+  expirationDate DateTime?
+  receivedAt     DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, code])
+}
+
+model Supplier {
+  id        String            @id @default(cuid())
+  name      String
+  ruc       String            @unique
+  contact   String
+  phone     String
+  address   String
+  status    SupplierStatus    @default(ACTIVE)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+}
+
+enum SupplierStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sales Sale[]
+}
+
+model Sale {
+  id                String        @id @default(cuid())
+  receiptType       ReceiptType
+  customerDocType   DocumentType?
+  customerDocNumber String?
+  customerName      String?
+  subtotal          Decimal       @default(0)
+  discount          Decimal       @default(0)
+  tax               Decimal       @default(0)
+  total             Decimal
+  paymentMethod     PaymentMethod
+  status            SaleStatus    @default(ACTIVE)
+  createdAt         DateTime     @default(now())
+  cancelledAt       DateTime?
+  updatedAt         DateTime     @updatedAt
+
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  items             SaleItem[]
+  inventoryMovements InventoryMovement[]
+  payments          SalePayment[]
+}
+
+model SalePayment {
+  id     String        @id @default(cuid())
+  saleId String
+  method PaymentMethod
+  amount Decimal
+
+  sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+}
+
+enum ReceiptType {
+  BOLETA
+  FACTURA
+}
+
+enum DocumentType {
+  DNI
+  RUC
+  CE
+  PASSPORT
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  YAPE
+  PLIN
+}
+
+enum SaleStatus {
+  ACTIVE
+  CANCELLED
+}
+
+model SaleItem {
+  id        String  @id @default(cuid())
+  quantity  Int
+  unitPrice Decimal
+  subtotal  Decimal
+  productId String
+
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  saleId  String
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([saleId, productId])
+}
+
+model InventoryMovement {
+  id            String       @id @default(cuid())
+  productId     String
+  productName   String
+  movementType  MovementType
+  quantity      Int
+  stockBefore   Int
+  stockAfter    Int
+  batchCode     String?
+  reason        String?
+  referenceId   String?
+  createdAt     DateTime     @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  sale    Sale?   @relation(fields: [referenceId], references: [id], onDelete: SetNull)
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  userName  String
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  createdAt DateTime @default(now())
+}
+
+enum MovementType {
+  PURCHASE
+  SALE
+  ADJUSTMENT
+  EXPIRATION
+}
+
+model PurchaseOrder {
+  id           String                @id @default(cuid())
+  supplierId   String
+  supplierName String
+  total        Decimal
+  status       PurchaseOrderStatus  @default(PENDING)
+  createdAt    DateTime             @default(now())
+  receivedAt   DateTime?
+  updatedAt    DateTime             @updatedAt
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  items    PurchaseOrderItem[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cashierSessions CashRegisterSession[] @relation("CashierOpened")
+  closedSessions  CashRegisterSession[] @relation("CashierClosed")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum PurchaseOrderStatus {
+  PENDING
+  RECEIVED
+  CANCELLED
+}
+
+model PurchaseOrderItem {
+  id          String  @id @default(cuid())
+  productId   String
+  productName String
+  quantity    Int
+  unitPrice   Decimal
+  subtotal    Decimal
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  purchaseOrderId String
+  product        Product     @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([purchaseOrderId, productId])
+}
+
+model CashRegisterSession {
+  id             String         @id @default(cuid())
+  openingAmount  Decimal
+  closingAmount  Decimal?
+  expectedAmount Decimal?
+  difference     Decimal?
+  status         SessionStatus @default(OPEN)
+  openedAt       DateTime       @default(now())
+  closedAt       DateTime?
+  notes          String?
+
+  openedById Int
+  closedById Int?
+  openedBy   User  @relation("CashierOpened", fields: [openedById], references: [id])
+  closedBy   User? @relation("CashierClosed", fields: [closedById], references: [id])
+}
+
+enum SessionStatus {
+  OPEN
+  CLOSED
+}

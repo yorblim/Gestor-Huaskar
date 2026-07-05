@@ -1,0 +1,16 @@
+import { Router } from "express";
+import { purchaseController } from "./purchase.controller";
+import { authMiddleware, requireRole } from "../../middlewares/auth.middleware";
+import { auditMiddleware } from "../../middlewares/audit.middleware";
+import { validate } from "../../middlewares/validate.middleware";
+import { createPurchaseSchema } from "./purchase.validation";
+
+const router = Router();
+
+router.get("/", authMiddleware, purchaseController.getAll);
+router.get("/:id", authMiddleware, purchaseController.getById);
+router.post("/", authMiddleware, auditMiddleware("CREATE", "PurchaseOrder"), validate(createPurchaseSchema), purchaseController.create);
+router.patch("/:id/receive", authMiddleware, requireRole("ADMIN"), auditMiddleware("RECEIVE", "PurchaseOrder"), purchaseController.receive);
+router.patch("/:id/cancel", authMiddleware, requireRole("ADMIN"), auditMiddleware("CANCEL", "PurchaseOrder"), purchaseController.cancel);
+
+export default router;
