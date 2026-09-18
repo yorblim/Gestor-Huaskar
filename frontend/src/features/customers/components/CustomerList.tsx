@@ -1,4 +1,5 @@
 import type { Customer } from "../types/customer";
+import { formatCustomerDoc } from "../types/customer";
 import { customerService } from "../services/customerService";
 
 interface CustomerListProps {
@@ -29,6 +30,7 @@ export function CustomerList({ customers, onRefresh, onEdit }: CustomerListProps
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
                 <th className="text-left py-3 px-4 text-xs font-semibold text-slate-700">Cliente</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-700">Documento</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-slate-700">Teléfono</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-slate-700">Dirección</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-slate-700">Registrado</th>
@@ -40,6 +42,9 @@ export function CustomerList({ customers, onRefresh, onEdit }: CustomerListProps
                 <tr key={customer.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                   <td className="py-3 px-4">
                     <p className="text-sm font-medium text-slate-900">{customer.name}</p>
+                  </td>
+                  <td className="py-3 px-4">
+                    <p className="text-sm text-slate-600">{formatCustomerDoc(customer)}</p>
                   </td>
                   <td className="py-3 px-4">
                     <p className="text-sm text-slate-600">{customer.phone || "-"}</p>

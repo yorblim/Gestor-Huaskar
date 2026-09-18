@@ -1,12 +1,33 @@
-import { CreateCustomerInput, UpdateCustomerInput, CustomerResponse } from "./customer.types";
+import { CreateCustomerInput, UpdateCustomerInput, CustomerResponse, CustomerDocType } from "./customer.types";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import { getPaginationParams, paginatedResult, type PaginatedResult } from "../../utils/pagination";
+
+const DB_DOC_TYPE = {
+  dni: "DNI",
+  ruc: "RUC",
+  ce: "CE",
+  passport: "PASSPORT",
+} as const;
+
+type DbDocType = (typeof DB_DOC_TYPE)[keyof typeof DB_DOC_TYPE];
+
+function toDocType(value: string | null | undefined): CustomerDocType | undefined {
+  if (!value) return undefined;
+  return value.toLowerCase() as CustomerDocType;
+}
+
+function toDbDocType(value?: CustomerDocType): DbDocType | null {
+  if (!value) return null;
+  return DB_DOC_TYPE[value];
+}
 
 function toCustomerResponse(customer: any): CustomerResponse {
   return {
     id: customer.id,
     name: customer.name,
+    docType: toDocType(customer.docType),
+    docNumber: customer.docNumber ?? undefined,
     phone: customer.phone ?? undefined,
     address: customer.address ?? undefined,
     createdAt: customer.createdAt.toISOString(),
@@ -15,7 +36,14 @@ function toCustomerResponse(customer: any): CustomerResponse {
 
 export async function getAllCustomers(query: Record<string, any> = {}): Promise<PaginatedResult<CustomerResponse>> {
   const params = getPaginationParams(query);
-  const where = params.search ? { name: { contains: params.search, mode: "insensitive" as const } } : {};
+  const where = params.search
+    ? {
+        OR: [
+          { name: { contains: params.search, mode: "insensitive" as const } },
+          { docNumber: { contains: params.search, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
 
   const [customers, total] = await Promise.all([
     prisma.customer.findMany({
@@ -34,10 +62,48 @@ export async function getCustomerById(id: string): Promise<CustomerResponse | nu
   return customer ? toCustomerResponse(customer) : null;
 }
 
+function normalizeDocNumber(value?: string): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+async function assertNoDuplicateDoc(
+  docType: DbDocType | null,
+  docNumber: string | null,
+  excludeId?: string
+): Promise<void> {
+  if (!docType || !docNumber) return;
+
+  const existing = await prisma.customer.findFirst({
+    where: {
+      docType,
+      docNumber,
+      ...(excludeId ? { id: { not: excludeId } } : {}),
+    },
+  });
+
+  if (existing) {
+    throw new AppError("Ya existe un cliente con ese tipo y número de documento.", 400);
+  }
+}
+
 export async function createCustomer(data: CreateCustomerInput): Promise<CustomerResponse> {
+  const docNumber = normalizeDocNumber(data.docNumber);
+  if (data.docType && !docNumber) {
+    throw new AppError("Debe indicar el número de documento.", 400);
+  }
+  if (!data.docType && docNumber) {
+    throw new AppError("Debe indicar el tipo de documento.", 400);
+  }
+
+  const docType = toDbDocType(data.docType);
+  await assertNoDuplicateDoc(docType, docNumber);
+
   const customer = await prisma.customer.create({
     data: {
       name: data.name,
+      docType,
+      docNumber,
       phone: data.phone ?? null,
       address: data.address ?? null,
     },
@@ -51,10 +117,34 @@ export async function updateCustomer(id: string, data: UpdateCustomerInput): Pro
     throw new AppError("Cliente no encontrado.", 404);
   }
 
+  const providedDocNumber = data.docNumber !== undefined;
+  const providedDocType = data.docType !== undefined;
+
+  const docNumber = providedDocNumber ? normalizeDocNumber(data.docNumber) : existing.docNumber;
+  let docType = providedDocType ? toDbDocType(data.docType) : existing.docType;
+
+  // Si se envía el número vacío sin indicar tipo, se limpia el documento completo.
+  if (providedDocNumber && docNumber === null && !providedDocType) {
+    docType = null;
+  }
+
+  const wantDoc = Boolean(docType || docNumber);
+
+  if (wantDoc && docType === null) {
+    throw new AppError("Debe indicar el tipo de documento.", 400);
+  }
+  if (wantDoc && docNumber === null) {
+    throw new AppError("Debe indicar el número de documento.", 400);
+  }
+
+  await assertNoDuplicateDoc(docType, docNumber, id);
+
   const customer = await prisma.customer.update({
     where: { id },
     data: {
       ...(data.name !== undefined && { name: data.name }),
+      ...((providedDocType || (providedDocNumber && docNumber === null)) && { docType }),
+      ...(providedDocNumber && { docNumber }),
       ...(data.phone !== undefined && { phone: data.phone ?? null }),
       ...(data.address !== undefined && { address: data.address ?? null }),
     },

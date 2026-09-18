@@ -36,9 +36,13 @@ export function CustomersPage() {
     setEditingCustomer(undefined);
   };
 
-  const filteredCustomers = customers.filter((customer) =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCustomers = customers.filter((customer) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      customer.name.toLowerCase().includes(term) ||
+      (customer.docNumber ?? "").toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="space-y-4">

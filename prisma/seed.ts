@@ -172,6 +172,25 @@ async function main() {
     },
   });
 
+  await prisma.customer.createMany({
+    data: [
+      {
+        name: "Juan Pérez",
+        docType: "DNI",
+        docNumber: "12345678",
+        phone: "987654321",
+        address: "Av. Siempre Viva 123",
+      },
+      {
+        name: "Empresa ABC S.A.C.",
+        docType: "RUC",
+        docNumber: "20123456789",
+        phone: "987654322",
+        address: "Av. Los Laureles 456",
+      },
+    ],
+  });
+
   console.log("✅ Cliente creado");
 
   // Crear orden de compra 1

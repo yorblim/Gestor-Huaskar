@@ -71,14 +71,18 @@ enum SupplierStatus {
 }
 
 model Customer {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   name      String
+  docType   DocumentType?
+  docNumber String?
   phone     String?
   address   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   sales Sale[]
+
+  @@unique([docType, docNumber])
 }
 
 model Sale {

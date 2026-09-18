@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { CreateCustomerInput, Customer, UpdateCustomerInput } from "../types/customer";
+import type { CreateCustomerInput, Customer, UpdateCustomerInput, CustomerDocType } from "../types/customer";
 import { customerService } from "../services/customerService";
 
 interface CustomerFormProps {
@@ -11,6 +11,8 @@ interface CustomerFormProps {
 export function CustomerForm({ onSuccess, customer, mode = 'create' }: CustomerFormProps) {
   const [formData, setFormData] = useState<CreateCustomerInput>({
     name: "",
+    docType: undefined,
+    docNumber: "",
     phone: "",
     address: "",
   });
@@ -21,6 +23,8 @@ export function CustomerForm({ onSuccess, customer, mode = 'create' }: CustomerF
     if (customer && mode === 'edit') {
       setFormData({
         name: customer.name,
+        docType: customer.docType,
+        docNumber: customer.docNumber || "",
         phone: customer.phone || "",
         address: customer.address || "",
       });
@@ -39,8 +43,8 @@ export function CustomerForm({ onSuccess, customer, mode = 'create' }: CustomerF
         await customerService.create(formData);
       }
       onSuccess();
-    } catch {
-      setError(mode === 'edit' ? "Error al actualizar cliente" : "Error al crear cliente");
+    } catch (err: any) {
+      setError(err.message || (mode === 'edit' ? "Error al actualizar cliente" : "Error al crear cliente"));
     } finally {
       setLoading(false);
     }
@@ -53,36 +57,71 @@ export function CustomerForm({ onSuccess, customer, mode = 'create' }: CustomerF
         {mode === 'edit' ? 'Editar Cliente' : 'Nuevo Cliente'}
       </h3>
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">Nombre</label>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-            placeholder="Nombre completo"
-            required
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Nombre</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+              placeholder="Nombre completo"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Tipo Doc.</label>
+            <select
+              value={formData.docType ?? ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  docType: e.target.value ? (e.target.value as CustomerDocType) : undefined,
+                  docNumber: e.target.value ? formData.docNumber : "",
+                })
+              }
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+            >
+              <option value="">Sin documento</option>
+              <option value="dni">DNI</option>
+              <option value="ruc">RUC</option>
+              <option value="ce">C.E.</option>
+              <option value="passport">Pasaporte</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">N° Documento</label>
+            <input
+              type="text"
+              value={formData.docNumber}
+              onChange={(e) => setFormData({ ...formData, docNumber: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+              placeholder={formData.docType === "ruc" ? "20XXXXXXXXX" : "12345678"}
+              disabled={!formData.docType}
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">Teléfono</label>
-          <input
-            type="text"
-            value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-            placeholder="+51 999 999 999"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">Dirección</label>
-          <input
-            type="text"
-            value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-            placeholder="Dirección completa"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Teléfono</label>
+            <input
+              type="text"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+              placeholder="+51 999 999 999"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Dirección</label>
+            <input
+              type="text"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+              placeholder="Dirección completa"
+            />
+          </div>
         </div>
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">

@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import type { CreateSaleItemInput, PaymentMethod, ReceiptType, DocumentType, PaymentSplit } from "../types/sale";
 import type { Product } from "../../products/types/product";
+import type { Customer } from "../../customers/types/customer";
+import { DOCUMENT_LABELS } from "../../customers/types/customer";
 import { saleService } from "../services/saleService";
 import { productService } from "../../products/services/productService";
+import { customerService } from "../../customers/services/customerService";
 
 interface SaleFormProps {
   onSuccess: (saleId?: string) => void;
@@ -10,6 +13,8 @@ interface SaleFormProps {
 
 export function SaleForm({ onSuccess }: SaleFormProps) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [items, setItems] = useState<CreateSaleItemInput[]>([]);
   const [receiptType, setReceiptType] = useState<ReceiptType>("boleta");
   const [customerDocType, setCustomerDocType] = useState<DocumentType>("dni");
@@ -44,10 +49,39 @@ export function SaleForm({ onSuccess }: SaleFormProps) {
     }
   };
 
+  const loadCustomers = async () => {
+    try {
+      setCustomers(await customerService.getAll());
+    } catch {
+      console.error("Error al cargar clientes");
+    }
+  };
+
   useEffect(() => {
     loadProducts();
+    loadCustomers();
     barcodeRef.current?.focus();
   }, []);
+
+  const handleCustomerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    setSelectedCustomerId(id);
+    const customer = customers.find((c) => c.id === id);
+    if (!customer) {
+      setCustomerName("");
+      setCustomerDocType("dni");
+      setCustomerDocNumber("");
+      return;
+    }
+    setCustomerName(customer.name);
+    if (customer.docType && customer.docNumber) {
+      setCustomerDocType(customer.docType);
+      setCustomerDocNumber(customer.docNumber);
+    } else {
+      setCustomerDocType("dni");
+      setCustomerDocNumber("");
+    }
+  };
 
   const handleBarcodeKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key !== "Enter") return;
@@ -154,6 +188,7 @@ export function SaleForm({ onSuccess }: SaleFormProps) {
     try {
       const sale = await saleService.create({
         receiptType,
+        customerId: selectedCustomerId || undefined,
         customerDocType: receiptType === "factura" ? customerDocType : undefined,
         customerDocNumber: receiptType === "factura" ? customerDocNumber : undefined,
         customerName: receiptType === "factura" ? customerName : undefined,
@@ -217,43 +252,70 @@ export function SaleForm({ onSuccess }: SaleFormProps) {
               {barcodeError && <p className="text-red-500 text-xs mt-0.5">{barcodeError}</p>}
             </div>
           </div>
-          {receiptType === "factura" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Tipo Doc.</label>
-                <select
-                  value={customerDocType}
-                  onChange={(e) => setCustomerDocType(e.target.value as DocumentType)}
-                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
-                >
-                  <option value="ruc">RUC</option>
-                  <option value="dni">DNI</option>
-                  <option value="ce">C.E.</option>
-                  <option value="passport">Pasaporte</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">N° Documento</label>
-                <input
-                  type="text"
-                  value={customerDocNumber}
-                  onChange={(e) => setCustomerDocNumber(e.target.value)}
-                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
-                  placeholder="Ingrese número"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Razón Social</label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
-                  placeholder="Nombre del cliente"
-                />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Cliente</label>
+              <select
+                value={selectedCustomerId}
+                onChange={handleCustomerChange}
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+              >
+                <option value="">Consumidor Final / Sin registro</option>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name}
+                    {customer.docNumber ? ` (${DOCUMENT_LABELS[customer.docType ?? "dni"]} ${customer.docNumber})` : ""}
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
+            {receiptType === "factura" && (
+              <>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Tipo Doc.</label>
+                  <select
+                    value={customerDocType}
+                    onChange={(e) => {
+                      setCustomerDocType(e.target.value as DocumentType);
+                      setSelectedCustomerId("");
+                    }}
+                    className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                  >
+                    <option value="ruc">RUC</option>
+                    <option value="dni">DNI</option>
+                    <option value="ce">C.E.</option>
+                    <option value="passport">Pasaporte</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">N° Documento</label>
+                  <input
+                    type="text"
+                    value={customerDocNumber}
+                    onChange={(e) => {
+                      setCustomerDocNumber(e.target.value);
+                      setSelectedCustomerId("");
+                    }}
+                    className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                    placeholder="Ingrese número"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Razón Social</label>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => {
+                      setCustomerName(e.target.value);
+                      setSelectedCustomerId("");
+                    }}
+                    className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                    placeholder="Nombre del cliente"
+                  />
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="px-3 py-1.5 border-b border-slate-200 flex-shrink-0">
