@@ -15,7 +15,7 @@ export function SaleForm({ onSuccess }: SaleFormProps) {
   const [customerDocType, setCustomerDocType] = useState<DocumentType>("dni");
   const [customerDocNumber, setCustomerDocNumber] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const [payments, setPayments] = useState<PaymentSplit[]>([]);
+  const [payments, setPayments] = useState<PaymentSplit[]>([{ method: "cash", amount: 0 }]);
   const [barcode, setBarcode] = useState("");
   const [barcodeError, setBarcodeError] = useState("");
   const barcodeRef = useRef<HTMLInputElement>(null);
@@ -47,9 +47,6 @@ export function SaleForm({ onSuccess }: SaleFormProps) {
   useEffect(() => {
     loadProducts();
     barcodeRef.current?.focus();
-    if (payments.length === 0) {
-      setPayments([{ method: "cash", amount: 0 }]);
-    }
   }, []);
 
   const handleBarcodeKeyDown = async (e: React.KeyboardEvent) => {

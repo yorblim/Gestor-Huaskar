@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../../features/auth/context/AuthContext";
+import { useAuth } from "../../features/auth/context/useAuth";
 import { useState } from "react";
-import { useWebSocket } from "../../features/websocket/context/WebSocketContext";
+import { useWebSocket } from "../../features/websocket/context/useWebSocket";
 import {
   LayoutDashboard,
   Package,

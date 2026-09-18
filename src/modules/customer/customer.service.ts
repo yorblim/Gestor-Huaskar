@@ -15,7 +15,7 @@ function toCustomerResponse(customer: any): CustomerResponse {
 
 export async function getAllCustomers(query: Record<string, any> = {}): Promise<PaginatedResult<CustomerResponse>> {
   const params = getPaginationParams(query);
-  const where = params.search ? { name: { contains: params.search } } : {};
+  const where = params.search ? { name: { contains: params.search, mode: "insensitive" as const } } : {};
 
   const [customers, total] = await Promise.all([
     prisma.customer.findMany({

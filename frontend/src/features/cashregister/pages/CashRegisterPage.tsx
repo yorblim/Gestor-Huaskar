@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useWebSocket } from "../../websocket/context/WebSocketContext";
+import { useWebSocket } from "../../websocket/context/useWebSocket";
 
 interface CashRegisterSession {
   id: string;
@@ -41,7 +41,7 @@ export function CashRegisterPage() {
       } else {
         setActiveSession(null);
       }
-    } catch (err) {
+    } catch {
       console.error("Error al cargar sesiones");
     } finally {
       setLoading(false);
@@ -88,7 +88,7 @@ export function CashRegisterPage() {
       setActiveSession(data.data);
       setOpeningAmount("");
       loadSessions();
-    } catch (err) {
+    } catch {
       setError("Error al abrir caja");
     } finally {
       setProcessing(false);
@@ -121,7 +121,7 @@ export function CashRegisterPage() {
       setActiveSession(null);
       setClosingAmount("");
       loadSessions();
-    } catch (err) {
+    } catch {
       setError("Error al cerrar caja");
     } finally {
       setProcessing(false);

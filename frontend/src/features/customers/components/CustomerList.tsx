@@ -13,7 +13,7 @@ export function CustomerList({ customers, onRefresh, onEdit }: CustomerListProps
     try {
       await customerService.delete(id);
       onRefresh();
-    } catch (err) {
+    } catch {
       alert("Error al eliminar cliente");
     }
   };

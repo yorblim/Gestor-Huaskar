@@ -1,20 +1,5 @@
-import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from "react";
-
-export interface WsEvent {
-  type: string;
-  data: any;
-  timestamp: string;
-}
-
-interface WebSocketContextValue {
-  connected: boolean;
-  lastEvent: WsEvent | null;
-  subscribe: (topic: string) => void;
-  unsubscribe: (topic: string) => void;
-  on: (eventType: string, handler: (event: WsEvent) => void) => () => void;
-}
-
-const WebSocketContext = createContext<WebSocketContextValue | null>(null);
+import { useEffect, useRef, useState, useCallback, type ReactNode } from "react";
+import { WebSocketContext, type WsEvent } from "./webSocketContextDef";
 
 const WS_URL = import.meta.env.VITE_WS_URL || `ws://${window.location.hostname}:3000/ws`;
 
@@ -24,6 +9,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const wsRef = useRef<WebSocket | null>(null);
   const handlersRef = useRef<Map<string, Set<(event: WsEvent) => void>>>(new Map());
   const reconnectRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const connectRef = useRef<() => void>(() => {});
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -58,13 +44,19 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
     ws.onclose = () => {
       setConnected(false);
-      reconnectRef.current = setTimeout(connect, 3000);
+      reconnectRef.current = setTimeout(() => {
+        connectRef.current();
+      }, 3000);
     };
 
     ws.onerror = () => {
       ws.close();
     };
   }, []);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   useEffect(() => {
     connect();
@@ -101,10 +93,4 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       {children}
     </WebSocketContext.Provider>
   );
-}
-
-export function useWebSocket() {
-  const ctx = useContext(WebSocketContext);
-  if (!ctx) throw new Error("useWebSocket must be inside WebSocketProvider");
-  return ctx;
 }

@@ -123,7 +123,7 @@ describe('Product Service', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             OR: expect.arrayContaining([
-              expect.objectContaining({ name: { contains: 'test' } }),
+              expect.objectContaining({ name: { contains: 'test', mode: 'insensitive' } }),
             ]),
           }),
         }),

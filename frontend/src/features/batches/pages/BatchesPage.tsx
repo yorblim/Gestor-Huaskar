@@ -44,7 +44,7 @@ export function BatchesPage() {
         }
       }
       setBatchesByProduct(batchMap);
-    } catch (err) {
+    } catch {
       console.error("Error al cargar datos");
     } finally {
       setLoading(false);

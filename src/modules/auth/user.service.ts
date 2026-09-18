@@ -4,7 +4,7 @@ import { AppError } from "../../utils/AppError";
 
 export async function getAllUsers(page = 1, limit = 50, search = "") {
   const where = search
-    ? { OR: [{ name: { contains: search } }, { email: { contains: search } }] }
+    ? { OR: [{ name: { contains: search, mode: "insensitive" as const } }, { email: { contains: search, mode: "insensitive" as const } }] }
     : {};
 
   const [users, total] = await Promise.all([

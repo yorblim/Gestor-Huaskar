@@ -21,7 +21,7 @@ export function PurchasesPage() {
     try {
       const data = await purchaseService.getAll();
       setOrders(data);
-    } catch (err) {
+    } catch {
       console.error("Error al cargar órdenes");
     } finally {
       setLoading(false);
@@ -32,7 +32,7 @@ export function PurchasesPage() {
     try {
       const data = await supplierService.getAll();
       setSuppliers(data);
-    } catch (err) {
+    } catch {
       console.error("Error al cargar proveedores");
     }
   };
@@ -41,7 +41,7 @@ export function PurchasesPage() {
     try {
       const result = await productService.getAll();
       setProducts(result.data);
-    } catch (err) {
+    } catch {
       console.error("Error al cargar productos");
     }
   };

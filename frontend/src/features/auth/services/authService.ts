@@ -42,8 +42,3 @@ export function getStoredAuth() {
   return null;
 }
 
-export function clearAuth() {
-}
-
-export function storeAuth(_token: string, _user: unknown) {
-}

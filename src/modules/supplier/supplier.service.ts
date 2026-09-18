@@ -21,8 +21,8 @@ export async function getAllSuppliers(query: Record<string, any> = {}): Promise<
   const where = params.search
     ? {
         OR: [
-          { name: { contains: params.search } },
-          { ruc: { contains: params.search } },
+          { name: { contains: params.search, mode: "insensitive" as const } },
+          { ruc: { contains: params.search, mode: "insensitive" as const } },
         ],
       }
     : {};

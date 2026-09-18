@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "../../features/auth/context/AuthContext";
+import { useAuth } from "../../features/auth/context/useAuth";
 import type { UserRole } from "../../features/auth/types/auth";
 
 type ProtectedRouteProps = {

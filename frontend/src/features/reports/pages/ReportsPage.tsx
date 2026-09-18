@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { reportService } from "../services/reportService";
 import type { ReportFilters } from "../types/report";
 
@@ -13,13 +13,13 @@ export function ReportsPage() {
   const latestRequestId = useRef(0);
 
   const handleReportChange = (report: ReportType) => {
-    // Evita renderizar un reporte nuevo con la data del reporte anterior.
+    setSelectedReport(report);
+    setFilters({});
     setData(null);
     setError("");
-    setSelectedReport(report);
   };
 
-  const loadReport = async () => {
+  const loadReport = useCallback(async () => {
     const requestId = ++latestRequestId.current;
     setLoading(true);
     setError("");
@@ -58,11 +58,11 @@ export function ReportsPage() {
         setLoading(false);
       }
     }
-  };
+  }, [selectedReport, filters]);
 
   useEffect(() => {
     loadReport();
-  }, [selectedReport]);
+  }, [loadReport]);
 
   const handleFilterChange = (key: keyof ReportFilters, value: string) => {
     setFilters({ ...filters, [key]: value || undefined });

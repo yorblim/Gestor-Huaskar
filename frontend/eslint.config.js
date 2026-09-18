@@ -21,6 +21,14 @@ export default defineConfig([
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       'react-hooks/set-state-in-effect': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
 ])

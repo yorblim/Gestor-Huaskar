@@ -13,7 +13,7 @@ export function ProductList({ products, onRefresh, onEdit }: ProductListProps) {
     try {
       await productService.delete(id);
       onRefresh();
-    } catch (err) {
+    } catch {
       alert("Error al eliminar producto");
     }
   };

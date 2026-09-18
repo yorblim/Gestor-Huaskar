@@ -30,9 +30,9 @@ export async function getAllProducts(query: Record<string, any> = {}): Promise<P
   const where = params.search
     ? {
         OR: [
-          { name: { contains: params.search } },
-          { code: { contains: params.search } },
-          { barcode: { contains: params.search } },
+          { name: { contains: params.search, mode: "insensitive" as const } },
+          { code: { contains: params.search, mode: "insensitive" as const } },
+          { barcode: { contains: params.search, mode: "insensitive" as const } },
         ],
       }
     : {};

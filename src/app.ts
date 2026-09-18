@@ -4,6 +4,7 @@ import path from "path";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
+import { env } from "./config/env";
 import router from "./routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import { setupSwagger } from "./swagger";
@@ -13,9 +14,7 @@ const app = express();
 app.use(helmet());
 app.use(cookieParser());
 
-const isProduction = process.env.NODE_ENV === "production";
-
-if (isProduction) {
+if (env.NODE_ENV === "production") {
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 200,
@@ -28,7 +27,7 @@ if (isProduction) {
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: "Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos." },
@@ -40,6 +39,12 @@ app.use(
     origin: (origin, callback) => {
       if (!origin || /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
         return callback(null, true);
+      }
+      if (env.CORS_ORIGIN) {
+        const allowed = env.CORS_ORIGIN.split(",").map((o) => o.trim());
+        if (allowed.includes(origin)) {
+          return callback(null, true);
+        }
       }
       return callback(new Error("Origen no permitido por CORS."));
     },
@@ -54,6 +59,7 @@ app.get("/health", (_req, res) => {
   res.status(200).json({
     success: true,
     message: "OK",
+    environment: env.NODE_ENV,
   });
 });
 

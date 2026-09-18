@@ -19,7 +19,7 @@ export function InventoryPage() {
     try {
       const data = await inventoryService.getAll();
       setMovements(data);
-    } catch (err) {
+    } catch {
       console.error("Error al cargar movimientos");
     } finally {
       setLoading(false);
@@ -30,7 +30,7 @@ export function InventoryPage() {
     try {
       const result = await productService.getAll();
       setProducts(result.data);
-    } catch (err) {
+    } catch {
       console.error("Error al cargar productos");
     }
   };

@@ -104,7 +104,7 @@ export function ProductForm({ onSuccess, product, mode = 'create' }: ProductForm
         await productService.create(submitData);
       }
       onSuccess();
-    } catch (err) {
+    } catch {
       setError(mode === 'edit' ? "Error al actualizar producto" : "Error al crear producto");
     } finally {
       setLoading(false);

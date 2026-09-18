@@ -17,11 +17,12 @@ type ApiEnvelope<T> = {
 
 async function parseReportResponse<T>(response: Response, defaultMessage: string): Promise<T> {
   const rawBody = await response.text();
-  let payload: unknown = null;
+  let payload: unknown;
 
   try {
     payload = rawBody ? JSON.parse(rawBody) : null;
   } catch {
+    payload = null;
   }
 
   const envelope: ApiEnvelope<T> | null =

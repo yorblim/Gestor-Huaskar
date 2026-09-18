@@ -22,7 +22,7 @@ export function PurchaseSuggestionsPage() {
         const res = await fetch("/api/purchase-suggestions", { credentials: "include" });
         const data = await res.json();
         if (data.success) setSuggestions(data.data);
-      } catch (err) {
+      } catch {
         console.error("Error al cargar sugerencias");
       } finally {
         setLoading(false);

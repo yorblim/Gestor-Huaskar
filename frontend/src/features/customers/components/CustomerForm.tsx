@@ -39,7 +39,7 @@ export function CustomerForm({ onSuccess, customer, mode = 'create' }: CustomerF
         await customerService.create(formData);
       }
       onSuccess();
-    } catch (err) {
+    } catch {
       setError(mode === 'edit' ? "Error al actualizar cliente" : "Error al crear cliente");
     } finally {
       setLoading(false);

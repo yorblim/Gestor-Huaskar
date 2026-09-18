@@ -126,3 +126,28 @@ jobs:
 
       - name: Build Frontend Docker Image
         run: docker build -t gestor-huaskar-frontend ./frontend
+
+  frontend-check:
+    name: Frontend Lint & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Frontend ESLint
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Frontend Build Check
+        working-directory: ./frontend
+        run: npm run build
+
