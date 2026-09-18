@@ -70,6 +70,14 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-5">
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900">
+        Dashboard
+      </h1>
+      <p className="text-sm text-gray-500 mt-1">
+        Resumen general de ventas, clientes, productos e inventario.
+      </p>
+    </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 hover:shadow-md transition-all">
           <div className="flex items-center justify-between mb-2">
